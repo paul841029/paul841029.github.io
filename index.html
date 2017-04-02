@@ -1,75 +1,129 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Query collection</title>
-    <link rel="stylesheet" href="index.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
-</head>
+<style>
+    body { font: 12px Arial;}
+
+path { 
+    stroke: steelblue;
+    stroke-width: 2;
+    fill: none;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: grey;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+
+</style>
+
 <body>
+<form id="frm1">
+  Length of sequence: <input type="text" name="length" value="5"><br>
+</form> 
+<button onclick="myFunction()">Try it</button>
+<form>
+<!-- load the d3.js library -->    
+<script src="https://d3js.org/d3.v3.min.js"></script>
 
-<div class="main">
-    <h1>Instructions</h1>
-    <h2>Please type in a query that describes the interestingness of the selected graphs.</h2>
-    <h2><a href="exapmle.html">Example</a></h2>
-    <form id="form1">
-        <h3>Insert query:</h3>
-        <input type="text" id="query1" class="submissionfield"><br>
+<script>
+var  seq_len = 0
+function myFunction(){
+	 seq_len = + document.getElementById("frm1").elements[0].value;
+   data = [];
+slope=[3,6,0,-3,-6,99]
+latest_y = 10
+min = 0
+for (var i =0 ; i<seq_len; i++){
+index = parseInt((10*Math.random())%6);
+if(slope[index]==99){
+	data.push({x:i,y:0});
+  if(min > 0)
+  	min = 0
+  }
+else{ 
+		data.push({x:i,y:latest_y+slope[index]});
+    latest_y = latest_y+slope[index]
+    if (min > latest_y)
+    	min = latest_y
+    }
+}
+if (min < 0) {
+ data.forEach(function(d) {
+ d.y = -min + d.y
+	})
+}
 
-        <div class="graphs">
-            <div id="graph_0"></div>
-            <div id="graph_1"></div>
-            <div id="graph_2"></div>
-            <div id="graph_3"></div>
-            <div id="graph_4"></div>
-            <div id="graph_5"></div>
-            <div id="graph_6"></div>
-            <div id="graph_7"></div>
-            <div id="graph_8"></div>
-            <div id="graph_9"></div>
-            <div id="graph_10"></div>
-            <div id="graph_11"></div>
-            <div id="graph_12"></div>
-            <div id="graph_13"></div>
-            <div id="graph_14"></div>
-        </div>
-        <input type="submit">
-    </form>
-</div>
+// Set the dimensions of the canvas / graph
+var margin = {top: 30, right: 20, bottom: 30, left: 50},
+    width = 600 - margin.left - margin.right,
+    height = 270 - margin.top - margin.bottom;
 
-<nav>
-    <a href="index.html">Collection1</a> |
-    <a href="/html/">Collection2</a> |
-    <a href="/html/">Collection3</a> |
-    <a href="/html/">Collection4</a> |
-    <a href="/html/">Collection5</a> |
-    <a href="/html/">Collection6</a> |
-    <a href="/html/">Collection7</a> |
-    <a href="/html/">Collection8</a> |
-    <a href="/html/">Collection9</a> |
-    <a href="/html/">Collection10</a> |
-    <a href="/html/">Collection11</a> |
-    <a href="/html/">Collection12</a> |
-    <a href="/html/">Collection13</a> |
-    <a href="/html/">Collection14</a> |
-    <a href="/html/">Collection15</a> |
-    <a href="/html/">Collection16</a> |
-    <a href="/html/">Collection17</a> |
-    <a href="/html/">Collection18</a> |
-    <a href="v2.html">Next</a> |
+// Set the ranges
+var x = d3.scale.linear().range([0, width]);
+var y = d3.scale.linear().range([height, 0]);
 
-</nav>
+// Define the axes
+var xAxis = d3.svg.axis().scale(x)
+    .orient("bottom").ticks(5);
+
+var yAxis = d3.svg.axis().scale(y)
+    .orient("left").ticks(5);
+
+// Define the line
+var valueline = d3.svg.line()
+    .x(function(d) { return x(d.x); })
+    .y(function(d) { return y(d.y); });
+    
+// Adds the svg canvas
+var svg = d3.select("body")
+    .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+        .attr("transform", 
+              "translate(" + margin.left + "," + margin.top + ")");
+
+// Get the data
 
 
 
+//d3.csv("data.csv", function(error, data) {
+   data.forEach(function(d) {
+        d.x = +d.x;
+        d.y = +d.y;
+    });
 
-<script src="script.js"></script>
-<script src="d3.js"></script>
-<script>generateGraphs("0");selectStep1("0/1/2")</script>
+    // Scale the range of the data
+    x.domain([0, d3.max(data, function(d) { return d.x; })]);
+    y.domain([0, d3.max(data, function(d) { return d.y; })]);
+
+    // Add the valueline path.
+    svg.append("path")
+        .attr("class", "line")
+        .attr("d", valueline(data));
+
+	svg.selectAll("dot")
+        .data(data)
+      .enter().append("circle")
+        .attr("r", 3.5)
+        .attr("cx", function(d) { return x(d.x); })
+        .attr("cy", function(d) { return y(d.y); });
+
+    // Add the X Axis
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+
+    // Add the Y Axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+//});
+
+}
+
+</script>
 </body>
-
-
-
-
-</html>
